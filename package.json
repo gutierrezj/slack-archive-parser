@@ -1,0 +1,15 @@
+{
+  "name": "esri-slack-exporter",
+  "version": "1.0.0",
+  "description": "Parses JSON exports from Slack, downloads images and creates an HTML with threads and images embedded as expected.",
+  "main": "slackImgDownload.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Javier Gutierrez <javier_gutierrez@esri.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "node-html-parser": "^1.2.20",
+    "node-json2html": "^1.4.0"
+  }
+}

@@ -1,0 +1,4 @@
+node_modules/
+input_data/*
+output_html/*
+temp/
