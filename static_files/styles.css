@@ -40,9 +40,13 @@ body {
   line-height: 1.5;
 }
 
-.messages .message .imgFile {
+.messages .message .msg .imgFile {
   max-width: 100%;
   padding: 10px 0;
+}
+
+.messages .message .msg .mention {
+  font-weight: bold;
 }
 
 .item {

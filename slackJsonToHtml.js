@@ -40,19 +40,38 @@ function readFileFromDisk(fileName) {
 //
 /////////////////////////////////////////////
 
+var userProfilesDict = {};
+
 function hydrateAllUsers(data) {
-  var userProfilesDict = {};
   data.forEach(function (item) {
     if (item["user_profile"]) {
       userProfilesDict[item.user] = item["user_profile"];
     }
   });
 
+  // add user_profile section to all messages
   data.forEach(function (item) {
     if (!item["user_profile"]) {
       item["user_profile"] = userProfilesDict[item.user];
     }
   });
+
+  //replace references with usernames
+  data
+    .filter((i) => i.text.indexOf("<@") > -1)
+    .forEach(function (item) {
+      let text = item.text;
+      var regex = RegExp(/<@([A-Z0-9]+)>/g);
+      let match = regex.exec(text);
+      while (match != null) {
+        let user = match[1];
+        if (userProfilesDict[user]) {
+          text = text.replace(match[0], "<span class='mention'>@" + userProfilesDict[user]["display_name"]+"</span>");
+        }
+        match = regex.exec(text);
+      }
+      item.text = text;
+    });
 
   return data;
 }
@@ -156,7 +175,7 @@ if (!fs.existsSync(OUTPUT_DIRECTORY)) {
 fs.copyFile(
   STATIC_FILES_DIRECTORY + CSS_STYLES_FILE,
   OUTPUT_DIRECTORY + CSS_STYLES_FILE,
-  ()=> console.log("copied CSS file to output folder")
+  () => console.log("copied CSS file to output folder")
 );
 
 fs.writeFileSync(OUTPUT_DIRECTORY + "\\zrh-materials.html", root.toString());
