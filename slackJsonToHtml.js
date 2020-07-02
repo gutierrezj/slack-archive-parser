@@ -66,7 +66,12 @@ function hydrateAllUsers(data) {
       while (match != null) {
         let user = match[1];
         if (userProfilesDict[user]) {
-          text = text.replace(match[0], "<span class='mention'>@" + userProfilesDict[user]["display_name"]+"</span>");
+          text = text.replace(
+            match[0],
+            "<span class='mention'>@" +
+              userProfilesDict[user]["display_name"] +
+              "</span>"
+          );
         }
         match = regex.exec(text);
       }
@@ -155,31 +160,41 @@ let template = {
 //
 /////////////////////////////////////////////
 
-var fileName = "2020-03-20.json";
-
-var data = readFileFromDisk(INPUT_DIRECTORY + fileName);
-
-hydrateAllUsers(data);
-
-var transformedHtml = json2html.transform(data, template);
-// console.log(transformedHtml);
-
 var root = getTemplateHtml(STATIC_FILES_DIRECTORY + TEMPLATE_FILE);
 var messagesNode = root.querySelector(".messages");
-messagesNode.set_content(transformedHtml);
+
+console.log("Opening archive:", INPUT_DIRECTORY);
+
+fs.readdir(INPUT_DIRECTORY, function (err, items) {
+  if (err) {
+    throw new Error(err);
+  }
+  console.log(items);
+
+  let jsonFiles = items.filter((i) => i.indexOf(".json") > 0);
+  let messages = [];
+  for (var i = 0; i < jsonFiles.length; i++) {
+    var fileName = INPUT_DIRECTORY + jsonFiles[i];
+    console.log("Reading JSON file:", fileName);
+    messages.push(...readFileFromDisk(fileName));
+  }
+  hydrateAllUsers(messages);
+  let transformedHtml = json2html.transform(messages, template);
+  messagesNode.appendChild(transformedHtml);
+  if (!fs.existsSync(OUTPUT_DIRECTORY)) {
+    fs.mkdirSync(OUTPUT_DIRECTORY);
+  }
+  fs.copyFile(
+    STATIC_FILES_DIRECTORY + CSS_STYLES_FILE,
+    OUTPUT_DIRECTORY + CSS_STYLES_FILE,
+    () => console.log("copied CSS file to output folder")
+  );
+
+  fs.writeFileSync(OUTPUT_DIRECTORY + "\\zrh-materials.html", root.toString());
+  console.log(
+    "Done writing the file:",
+    OUTPUT_DIRECTORY + "zrh-materials.html"
+  );
+});
+
 // console.log(root.toString());
-
-if (!fs.existsSync(OUTPUT_DIRECTORY)) {
-  fs.mkdirSync(OUTPUT_DIRECTORY);
-}
-fs.copyFile(
-  STATIC_FILES_DIRECTORY + CSS_STYLES_FILE,
-  OUTPUT_DIRECTORY + CSS_STYLES_FILE,
-  () => console.log("copied CSS file to output folder")
-);
-
-fs.writeFileSync(OUTPUT_DIRECTORY + "\\zrh-materials.html", root.toString());
-console.log(
-  "Done writing the file:",
-  OUTPUT_DIRECTORY + "\\zrh-materials.html"
-);
