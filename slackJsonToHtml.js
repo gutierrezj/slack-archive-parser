@@ -101,7 +101,7 @@ function convertTimestamp(epochTime) {
 
 let template = {
   "<>": "div",
-  class: "item",
+  class: function(obj){return (obj["parent_user_id"] ? "item response" : "item") },
   html: [
     {
       "<>": "img",
@@ -154,6 +154,43 @@ let template = {
 // </div>
 // <br/>
 
+////
+
+function isReply(m){
+  return m.thread_ts && !m.replies;
+}
+function isNotReply(m){
+  return !isReply(m);
+}
+
+function processThreads(messages) {
+  
+  let initialLength = messages.length;
+  let replyMessages = messages.filter(isReply);
+  let newMessages = messages.filter(isNotReply);
+
+  console.log("mgs length %d | reply length %d | newMsg length %d", initialLength, replyMessages.length, newMessages.length);
+
+  newMessages.sort((a,b)=>a.ts - b.ts);
+
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if(m.replies){
+      m.replies.reverse();
+      m.replies.forEach(r => {
+        let idx = newMessages.findIndex(nm => nm.client_msg_id === m.client_msg_id );
+        let reply = replyMessages.find( rm => rm.ts === r.ts );
+        // remove the reply message from the temp array
+        // let reply = replyMessages.splice(replyIdx,1);
+        // add the reply message to the new message array, in order
+        newMessages.splice(idx+1, 0, reply);
+      });
+    }
+  }
+  console.log("mgs length %d | newMsg length %d", initialLength, newMessages.length);
+  return newMessages;
+}
+
 /////////////////////////////////////////////
 //
 // execute conversion for input data
@@ -179,6 +216,7 @@ fs.readdir(INPUT_DIRECTORY, function (err, items) {
     messages.push(...readFileFromDisk(fileName));
   }
   hydrateAllUsers(messages);
+  messages = processThreads(messages);
   let transformedHtml = json2html.transform(messages, template);
   messagesNode.appendChild(transformedHtml);
   if (!fs.existsSync(OUTPUT_DIRECTORY)) {

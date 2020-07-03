@@ -49,9 +49,18 @@ body {
   font-weight: bold;
 }
 
-.item {
-  padding-bottom: 22px;
+.item.response {
+  background: #ecececad;
+  border-left: blue 1px solid;
+  padding-left: 60px;
+  margin-top: 0;
 }
+.item {
+  margin-top: 25px;
+  border-left: blue 1px solid;
+  padding: 5px 15px;
+}
+
 .item:hover {
   background-color: #f7f7f7;
 }
