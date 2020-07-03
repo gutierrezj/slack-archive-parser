@@ -10,6 +10,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "node-html-parser": "^1.2.20",
-    "node-json2html": "^1.4.0"
+    "node-json2html": "^1.4.0",
+    "yargs": "^15.4.0"
   }
 }
