@@ -9,6 +9,7 @@
   "author": "Javier Gutierrez <javier_gutierrez@esri.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "console-log-level": "^1.4.1",
     "node-html-parser": "^1.2.20",
     "node-json2html": "^1.4.0",
     "yargs": "^15.4.0"

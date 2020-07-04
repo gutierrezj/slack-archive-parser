@@ -4,11 +4,14 @@
 const yargs = require("yargs");
 const fs = require("fs");
 const http = require("https");
+const path = require("path");
+
 const json2html = require("node-json2html");
 const HTMLParser = require("node-html-parser");
+const log = require('console-log-level')({ level: 'info' })
 
-const OUTPUT_DIRECTORY = "output_html\\";
-const STATIC_FILES_DIRECTORY = "static_files\\";
+const OUTPUT_DIRECTORY = "output_html";
+const STATIC_FILES_DIRECTORY = "static_files";
 const CSS_STYLES_FILE = "styles.css";
 const TEMPLATE_FILE = "slack-output-template.html";
 
@@ -141,12 +144,12 @@ function processThreads(messages) {
   let replyMessages = messages.filter(isReply);
   let newMessages = messages.filter(isNotReply);
 
-  console.log(
-    "mgs length %d | reply length %d | newMsg length %d",
-    initialLength,
-    replyMessages.length,
-    newMessages.length
-  );
+  // log.debug(
+  //   "mgs length %d | reply length %d | newMsg length %d",
+  //   initialLength,
+  //   replyMessages.length,
+  //   newMessages.length
+  // );
 
   newMessages.sort((a, b) => a.ts - b.ts);
 
@@ -159,18 +162,12 @@ function processThreads(messages) {
           (nm) => nm.client_msg_id === m.client_msg_id
         );
         let reply = replyMessages.find((rm) => rm.ts === r.ts);
-        // remove the reply message from the temp array
-        // let reply = replyMessages.splice(replyIdx,1);
+
         // add the reply message to the new message array, in order
         newMessages.splice(idx + 1, 0, reply);
       });
     }
   }
-  console.log(
-    "mgs length %d | newMsg length %d",
-    initialLength,
-    newMessages.length
-  );
   return newMessages;
 }
 
@@ -195,8 +192,7 @@ function downloadFile(url, fileName) {
 }
 
 function processQueue() {
-  console.log("queue length ", queue.length);
-  console.log("executing length ", executing.length);
+  // log.debug("queue length %d, executing length %d", queue.length, executing.length);
 
   if (queue.length <= 0) {
     return;
@@ -218,16 +214,16 @@ function processQueue() {
 
 function processDownloadFile(url, fileName, callback) {
   if (!fs.existsSync(fileName)) {
-    console.log("Downloading file:", url);
+    log.debug("Downloading file:", url);
     const request = http.get(url, function (response) {
       const file = fs.createWriteStream(fileName);
       response.pipe(file);
-      console.log("Done downloading file:", fileName);
+      log.debug("Done downloading file:", fileName);
       callback();
     });
     request.on("error", callback);
   } else {
-    console.log("File already downloaded:", fileName);
+    log.debug("File already downloaded:", fileName);
     callback();
   }
 }
@@ -247,7 +243,7 @@ function downloadImgs(msg) {
     f["local_file"] = fileName;
 
     // download the image in the output folder
-    downloadFile(url, OUTPUT_DIRECTORY + "\\" + fileName);
+    downloadFile(url, path.join(OUTPUT_DIRECTORY, fileName));
   });
 }
 
@@ -263,7 +259,7 @@ function readFileFromDisk(fileName) {
   return archive;
 }
 
-var root = getTemplateHtml(STATIC_FILES_DIRECTORY + TEMPLATE_FILE);
+var root = getTemplateHtml(path.join(STATIC_FILES_DIRECTORY, TEMPLATE_FILE));
 var messagesNode = root.querySelector(".messages");
 
 /////////////////////////////////////////////
@@ -272,79 +268,70 @@ var messagesNode = root.querySelector(".messages");
 //
 /////////////////////////////////////////////
 
-function readChannelAndDownloadImages(dirName, channelName) {
+function readChannelAndDownloadImages(baseDir, channelName) {
+  let dirName = path.join(baseDir, channelName);
+
   fs.readdir(dirName, function (err, items) {
     //
     // first: parse files, download images, update jsons with local filename
     //
     let messagesCombined = [];
-
+    let imgCount = 0;
     for (var i = 0; i < items.length; i++) {
-      console.log(items[i]);
-      var fileName = dirName + items[i];
+      // log.debug(items[i]);
+      var fileName = path.join(dirName, items[i]);
 
-      console.log("Opening archive:", fileName);
       let messages = readFileFromDisk(fileName);
-
-      console.log("Parsing archive. Number of messages:", messages.length);
+      log.debug(
+        "Reading messages file '%s', it contains %d messages.",
+        fileName,
+        messages.length
+      );
 
       let msgWithImgs = messages.filter((m) => m.files && m.files.length > 0);
-      console.log(msgWithImgs);
+      imgCount+= msgWithImgs.reduce(((p, m)=> p+m.files.length),0);
       msgWithImgs.forEach((m) => downloadImgs(m));
-
-      // fs.writeFileSync(
-      //   TEMP_DIRECTORY + items[i],
-      //   JSON.stringify(messages, null, 2)
-      // );
+      
       messagesCombined.push(...messages);
     }
+    log.info(`Downloading ${imgCount} files.`);
 
     //
     // second: convert to html
     //
 
-    // for (var i = 0; i < items.length; i++) {
-    //   console.log(items[i]);
-    //   var fileName = TEMP_DIRECTORY + items[i];
+    log.info(`Converting ${messagesCombined.length} JSON messages to HTML.`);
 
-    //   console.log("Reading JSON file:", fileName);
-    //   messagesCombined.push(...readFileFromDisk(fileName));
-    // }
     hydrateAllUsers(messagesCombined);
     messagesCombined = processThreads(messagesCombined);
     let transformedHtml = json2html.transform(messagesCombined, template);
     messagesNode.appendChild(transformedHtml);
-    if (!fs.existsSync(OUTPUT_DIRECTORY)) {
-      fs.mkdirSync(OUTPUT_DIRECTORY);
-    }
-    fs.copyFile(
-      STATIC_FILES_DIRECTORY + CSS_STYLES_FILE,
-      OUTPUT_DIRECTORY + CSS_STYLES_FILE,
-      () => console.log("copied CSS file to output folder")
-    );
+    
 
-    fs.writeFileSync(
-      OUTPUT_DIRECTORY + "\\zrh-materials.html",
-      root.toString()
-    );
-    console.log(
-      "Done writing the file:",
-      OUTPUT_DIRECTORY + "zrh-materials.html"
-    );
+    let outputHtmlFile = path.join(OUTPUT_DIRECTORY, channelName + ".html");
+    fs.writeFileSync(outputHtmlFile, root.toString());
+    log.info("Done writing the channel file:", outputHtmlFile);
   });
 }
 
-function processChannelSubdir(dirName) {
-  dirName = dirName + "\\";
-
-  let channelName =
-    dirName.indexOf("\\") > 0 ? dirName.split("\\").pop() : dirName;
-
-  readChannelAndDownloadImages(dirName, channelName);
+function processChannelSubdir(baseDir, channelName) {
+  log.info(`Processing slack channel '${channelName}'.\n`);
+  readChannelAndDownloadImages(baseDir, channelName);
 }
 
-function processArchiveDir(dir) {
-  throw new Error("archive not yet implemented");
+function processArchiveDir(archiveDir) {
+  log.debug(`Processing slack archive directory '${archiveDir}'.`);
+
+  fs.readdir(archiveDir, function (err, items) {
+    let channelDirs = items.filter((i) =>
+      fs.statSync(path.join(archiveDir, i)).isDirectory()
+    );
+    log.debug(
+      `Processing slack archive, ${channelDirs.length} channel(s) found.\n`
+    );
+
+    channelDirs.forEach((c) => processChannelSubdir(archiveDir, c));
+  });
 }
 
 ////////////////////////////////////////////////
@@ -375,8 +362,23 @@ const argv = yargs
 
 let dirName = argv._[0];
 
+log.debug("");
+dirName = path.normalize(dirName);
+
+if (!fs.existsSync(OUTPUT_DIRECTORY)) {
+  fs.mkdirSync(OUTPUT_DIRECTORY);
+}
+fs.copyFile(
+  path.join(STATIC_FILES_DIRECTORY, CSS_STYLES_FILE),
+  path.join(OUTPUT_DIRECTORY, CSS_STYLES_FILE),
+  () => log.debug("Copied CSS file to output folder")
+);
+
+
 if (argv.a) {
   processArchiveDir(dirName);
 } else {
-  processChannelSubdir(dirName);
+  let channelName = path.basename(dirName);
+  let baseDir = path.dirname(dirName);
+  processChannelSubdir(baseDir, channelName);
 }
