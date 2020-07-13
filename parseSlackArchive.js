@@ -3,17 +3,21 @@
 
 const yargs = require("yargs");
 const fs = require("fs");
-const http = require("https");
+const { parse } = require("url");
 const path = require("path");
+
+const axios = require("axios");
 
 const json2html = require("node-json2html");
 const HTMLParser = require("node-html-parser");
-const log = require('console-log-level')({ level: 'info' })
+const log = require("console-log-level")({ level: "info" });
 
 const OUTPUT_DIRECTORY = "output_html";
 const STATIC_FILES_DIRECTORY = "static_files";
 const CSS_STYLES_FILE = "styles.css";
 const TEMPLATE_FILE = "slack-output-template.html";
+
+const MAX_CONCURRENT_DOWNLOADS = 3;
 
 /////////////////////////////////////////////
 //
@@ -47,12 +51,7 @@ function hydrateAllUsers(data) {
       while (match != null) {
         let user = match[1];
         if (userProfilesDict[user]) {
-          text = text.replace(
-            match[0],
-            "<span class='mention'>@" +
-              userProfilesDict[user]["display_name"] +
-              "</span>"
-          );
+          text = text.replace(match[0], "<span class='mention'>@" + userProfilesDict[user]["display_name"] + "</span>");
         }
         match = regex.exec(text);
       }
@@ -158,9 +157,7 @@ function processThreads(messages) {
     if (m.replies) {
       m.replies.reverse();
       m.replies.forEach((r) => {
-        let idx = newMessages.findIndex(
-          (nm) => nm.client_msg_id === m.client_msg_id
-        );
+        let idx = newMessages.findIndex((nm) => nm.client_msg_id === m.client_msg_id);
         let reply = replyMessages.find((rm) => rm.ts === r.ts);
 
         // add the reply message to the new message array, in order
@@ -179,16 +176,57 @@ function processThreads(messages) {
 
 var queue = [];
 var executing = [];
-const maxConcurrent = 4;
+
+function downloadFiles(messages) {
+  const filesToDownload = [];
+
+  // parse json to get the url and to append the new local file name
+  messages.forEach((m) => {
+    m.files.forEach((f) => {
+      const url = f["url_private_download"];
+      const fileName = f.id + "_" + f.created + "_" + f.name;
+
+      // writes the new filename to the JSON file
+      f["local_file"] = fileName;
+
+      const downloadDetails = {
+        url: url,
+        outputPath: path.join(OUTPUT_DIRECTORY, fileName),
+      };
+      filesToDownload.push(downloadDetails);
+    });
+  });
+
+  let count = 0;
+  process.stdout.write(`Downloading files: ${count++}/${filesToDownload.length} done.`);
+  const promises = filesToDownload.map((f) => {
+    return downloadFile(f.url, f.outputPath).then(() => {
+      process.stdout.clearLine();
+      process.stdout.cursorTo(0);
+      process.stdout.write(`Downloading files: ${count++}/${filesToDownload.length} done.`);
+      if (count > filesToDownload.length) {
+        process.stdout.write(`\n`);
+      }
+    });
+  });
+
+  return Promise.all(promises);
+}
 
 function downloadFile(url, fileName) {
-  var task = {
-    id: Math.random(),
-    url: url,
-    fileName: fileName,
-  };
-  queue.push(task);
-  processQueue();
+  return new Promise((res, rej) => {
+    var task = {
+      id: Math.random(),
+      url: url,
+      fileName: fileName,
+      promise: {
+        resolve: res,
+        reject: rej,
+      },
+    };
+    queue.push(task);
+    processQueue();
+  });
 }
 
 function processQueue() {
@@ -197,54 +235,41 @@ function processQueue() {
   if (queue.length <= 0) {
     return;
   }
-  while (queue.length > 0 && executing.length < maxConcurrent) {
+  while (queue.length > 0 && executing.length < MAX_CONCURRENT_DOWNLOADS) {
     var task = queue.shift();
     executing.push(task);
-    processDownloadFile(task.url, task.fileName, function () {
-      executing.splice(
-        executing.findIndex(function (t) {
-          t.id === task.id;
-        }),
-        1
-      );
-      processQueue();
-    });
+    doDownloadFile(task.url, task.fileName)
+      .then(() => {
+        let idx = executing.findIndex((t) => t.id === task.id);
+        task.promise.resolve();
+        executing.splice(idx, 1);
+        processQueue();
+      })
+      .catch((e) => {
+        task.promise.reject(e);
+      });
   }
 }
 
-function processDownloadFile(url, fileName, callback) {
-  if (!fs.existsSync(fileName)) {
-    log.debug("Downloading file:", url);
-    const request = http.get(url, function (response) {
-      const file = fs.createWriteStream(fileName);
-      response.pipe(file);
-      log.debug("Done downloading file:", fileName);
-      callback();
+async function doDownloadFile(url, path) {
+  log.debug(`'${path}' - download started.`);
+  try {
+    const uri = parse(url);
+    if (!path) {
+      path = basename(uri.path);
+    }
+    await axios({
+      method: "get",
+      url: uri.href,
+      responseType: "stream",
+    }).then((res) => {
+      res.data.pipe(fs.createWriteStream(path));
     });
-    request.on("error", callback);
-  } else {
-    log.debug("File already downloaded:", fileName);
-    callback();
+    log.debug(`'${path}' - download done.`);
+  } catch (e) {
+    log.error(`'${path}' - download failed.`, e.message);
+    log.trace(e.message);
   }
-}
-
-/////////////////////////////////////////////
-//
-// json parsing functions
-//
-/////////////////////////////////////////////
-
-function downloadImgs(msg) {
-  msg.files.forEach((f) => {
-    var url = f["url_private_download"];
-    var fileName = f.id + "_" + f.created + "_" + f.name;
-
-    // writes the new filename to the JSON file
-    f["local_file"] = fileName;
-
-    // download the image in the output folder
-    downloadFile(url, path.join(OUTPUT_DIRECTORY, fileName));
-  });
 }
 
 /////////////////////////////////////////////
@@ -276,41 +301,34 @@ function readChannelAndDownloadImages(baseDir, channelName) {
     // first: parse files, download images, update jsons with local filename
     //
     let messagesCombined = [];
-    let imgCount = 0;
     for (var i = 0; i < items.length; i++) {
       // log.debug(items[i]);
       var fileName = path.join(dirName, items[i]);
 
       let messages = readFileFromDisk(fileName);
-      log.debug(
-        "Reading messages file '%s', it contains %d messages.",
-        fileName,
-        messages.length
-      );
+      log.debug("Reading messages file '%s', it contains %d messages.", fileName, messages.length);
 
-      let msgWithImgs = messages.filter((m) => m.files && m.files.length > 0);
-      imgCount+= msgWithImgs.reduce(((p, m)=> p+m.files.length),0);
-      msgWithImgs.forEach((m) => downloadImgs(m));
-      
       messagesCombined.push(...messages);
     }
-    log.info(`Downloading ${imgCount} files.`);
+    let msgWithImgs = messagesCombined.filter((m) => m.files && m.files.length > 0);
+    let imgCount = msgWithImgs.reduce((p, m) => p + m.files.length, 0);
 
-    //
-    // second: convert to html
-    //
+    downloadFiles(msgWithImgs).then(() => {
+      //
+      // second: convert to html
+      //
 
-    log.info(`Converting ${messagesCombined.length} JSON messages to HTML.`);
+      log.info(`Converting ${messagesCombined.length} JSON messages to HTML.`);
 
-    hydrateAllUsers(messagesCombined);
-    messagesCombined = processThreads(messagesCombined);
-    let transformedHtml = json2html.transform(messagesCombined, template);
-    messagesNode.appendChild(transformedHtml);
-    
+      hydrateAllUsers(messagesCombined);
+      messagesCombined = processThreads(messagesCombined);
+      let transformedHtml = json2html.transform(messagesCombined, template);
+      messagesNode.appendChild(transformedHtml);
 
-    let outputHtmlFile = path.join(OUTPUT_DIRECTORY, channelName + ".html");
-    fs.writeFileSync(outputHtmlFile, root.toString());
-    log.info("Done writing the channel file:", outputHtmlFile);
+      let outputHtmlFile = path.join(OUTPUT_DIRECTORY, channelName + ".html");
+      fs.writeFileSync(outputHtmlFile, root.toString());
+      log.info("Done writing the channel file:", outputHtmlFile);
+    });
   });
 }
 
@@ -323,12 +341,8 @@ function processArchiveDir(archiveDir) {
   log.debug(`Processing slack archive directory '${archiveDir}'.`);
 
   fs.readdir(archiveDir, function (err, items) {
-    let channelDirs = items.filter((i) =>
-      fs.statSync(path.join(archiveDir, i)).isDirectory()
-    );
-    log.debug(
-      `Processing slack archive, ${channelDirs.length} channel(s) found.\n`
-    );
+    let channelDirs = items.filter((i) => fs.statSync(path.join(archiveDir, i)).isDirectory());
+    log.debug(`Processing slack archive, ${channelDirs.length} channel(s) found.\n`);
 
     channelDirs.forEach((c) => processChannelSubdir(archiveDir, c));
   });
@@ -368,12 +382,9 @@ dirName = path.normalize(dirName);
 if (!fs.existsSync(OUTPUT_DIRECTORY)) {
   fs.mkdirSync(OUTPUT_DIRECTORY);
 }
-fs.copyFile(
-  path.join(STATIC_FILES_DIRECTORY, CSS_STYLES_FILE),
-  path.join(OUTPUT_DIRECTORY, CSS_STYLES_FILE),
-  () => log.debug("Copied CSS file to output folder")
+fs.copyFile(path.join(STATIC_FILES_DIRECTORY, CSS_STYLES_FILE), path.join(OUTPUT_DIRECTORY, CSS_STYLES_FILE), () =>
+  log.debug("Copied CSS file to output folder")
 );
-
 
 if (argv.a) {
   processArchiveDir(dirName);
