@@ -19,7 +19,7 @@ const CSS_STYLES_FILE = "styles.css";
 //
 /////////////////////////////////////////////
 
-function downloadFiles(messages) {
+function downloadFiles(messages, channelName) {
   const filesToDownload = [];
 
   // parse json to get the url and to append the new local file name
@@ -27,13 +27,16 @@ function downloadFiles(messages) {
     m.files.forEach((f) => {
       const url = f["url_private_download"];
       const fileName = f.id + "_" + f.created + "_" + f.name;
+      
 
-      // writes the new filename to the JSON file
-      f["local_file"] = fileName;
+      // writes the new filename and relative path to the JSON file, 
+      f["local_file"] = path.join(channelName, fileName);
+
+      createDirIfItDoesntExist(path.join(OUTPUT_DIRECTORY, channelName));
 
       const downloadDetails = {
         url: url,
-        outputPath: path.join(OUTPUT_DIRECTORY, fileName),
+        outputPath: path.join(OUTPUT_DIRECTORY, channelName, fileName),
       };
       if (fs.existsSync(downloadDetails.outputPath)) {
         log.info("file already exists, skipping download: ", fileName);
@@ -48,7 +51,7 @@ function downloadFiles(messages) {
 
 /////////////////////////////////////////////
 //
-// open the file
+// file utils
 //
 /////////////////////////////////////////////
 
@@ -56,6 +59,12 @@ function readFileFromDisk(fileName) {
   let rawdata = fs.readFileSync(fileName);
   let archive = JSON.parse(rawdata);
   return archive;
+}
+
+function createDirIfItDoesntExist(path){
+  if(!fs.existsSync(path)){
+    fs.mkdirSync(path);
+  }
 }
 
 /////////////////////////////////////////////
@@ -69,7 +78,7 @@ function readChannelAndDownloadImages(baseDir, channelName) {
 
   fs.readdir(dirName, function (err, items) {
     //
-    // first: parse files, download images, update jsons with local filename
+    // first: parse archive files
     //
     let messagesCombined = [];
     for (var i = 0; i < items.length; i++) {
@@ -83,11 +92,14 @@ function readChannelAndDownloadImages(baseDir, channelName) {
     }
     let msgWithImgs = messagesCombined.filter((m) => m.files && m.files.length > 0);
 
-    downloadFiles(msgWithImgs).then(() => {
-      //
-      // second: convert to html
-      //
+    //
+    // second: update jsons with local filename & download attachment files
+    //
+    downloadFiles(msgWithImgs, channelName).then(() => {
 
+      //
+      // third: convert to html
+      //
       log.info(`Converting ${messagesCombined.length} JSON messages to HTML.`);
       htmlConverter(messagesCombined, channelName);
     });
@@ -141,9 +153,10 @@ let dirName = argv._[0];
 log.debug("");
 dirName = path.normalize(dirName);
 
-if (!fs.existsSync(OUTPUT_DIRECTORY)) {
-  fs.mkdirSync(OUTPUT_DIRECTORY);
-}
+
+
+createDirIfItDoesntExist(OUTPUT_DIRECTORY);
+
 fs.copyFile(path.join(STATIC_FILES_DIRECTORY, CSS_STYLES_FILE), path.join(OUTPUT_DIRECTORY, CSS_STYLES_FILE), () =>
   log.debug("Copied CSS file to output folder")
 );
