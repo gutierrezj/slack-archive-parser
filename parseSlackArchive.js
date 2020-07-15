@@ -30,7 +30,7 @@ function downloadFiles(messages, channelName) {
       
 
       // writes the new filename and relative path to the JSON file, 
-      f["local_file"] = path.join(channelName, fileName);
+      f["local_file"] = path.posix.join(channelName, fileName);
 
       createDirIfItDoesntExist(path.join(OUTPUT_DIRECTORY, channelName));
 

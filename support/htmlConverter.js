@@ -3,7 +3,7 @@ const json2html = require("node-json2html");
 const HTMLParser = require("node-html-parser");
 const path = require("path");
 const fs = require("fs");
-
+const emoji = require('node-emoji')
 
 const TEMPLATE_FILE = "slack-output-template.html";
 const STATIC_FILES_DIRECTORY = "static_files";
@@ -54,11 +54,18 @@ function hydrateAllUsers(data) {
   return data;
 }
 
-/////////////////////////////////////////////
-//
-// helper function for timestamp converter
-//
-/////////////////////////////////////////////
+function parseEmojis(data) {
+  const onMissing = function (name) {
+    log.info("Unknown emoji: ", name);
+    return name;
+  };
+
+  // const slackEmojiRegexp = new RegExp(":[^:s]*(?:::[^:s]*)*:", "g");
+  data
+  .forEach(i =>{
+    i.text = emoji.emojify(i.text, onMissing);
+  })
+}
 
 function convertTimestamp(epochTime) {
   var d = new Date(0); // The 0 there sets the date to the epoch
@@ -163,6 +170,7 @@ function processThreads(messages) {
 
 module.exports = function (messagesCombined, channelName) {
   hydrateAllUsers(messagesCombined);
+  parseEmojis(messagesCombined);
   messagesCombined = processThreads(messagesCombined);
   let transformedHtml = json2html.transform(messagesCombined, template);
   messagesNode.appendChild(transformedHtml);
