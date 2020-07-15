@@ -61,8 +61,7 @@ function parseEmojis(data) {
   };
 
   // const slackEmojiRegexp = new RegExp(":[^:s]*(?:::[^:s]*)*:", "g");
-  data
-  .forEach(i =>{
+  data.forEach(i =>{
     i.text = emoji.emojify(i.text, onMissing);
   })
 }
@@ -109,17 +108,31 @@ let template = {
         {
           "<>": "div",
           class: "msg",
-          html: [
-            {
+          html: function(obj){
+            const textTransform ={
               "<>": "span",
               html: "${text}",
-            },
-            {
+            }
+            const imgTransform = {
               "<>": "img",
               class: "imgFile",
               src: "${files.0.local_file}",
-            },
-          ],
+            }
+
+            const videoTransform = {
+              "<>": "video",
+              class: "videoFile",
+              controls: "true",
+              src: "${files.0.local_file}",
+            }
+
+            if(obj.files && obj.files.length > 1 ){
+              console.warn("\n\nMore than 1 file detected!! \n\n", obj.files[1].id);
+            }
+            const transforms = [textTransform, obj.files && obj.files[0].filetype === "mp4" ? videoTransform : imgTransform]
+
+            return json2html.transform(obj,transforms)
+          } 
         },
       ],
     },

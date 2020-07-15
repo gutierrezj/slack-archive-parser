@@ -40,7 +40,8 @@ body {
   line-height: 1.5;
 }
 
-.messages .message .msg .imgFile {
+.messages .message .msg .imgFile,
+.messages .message .msg .videoFile {
   max-width: 100%;
   padding: 10px 0;
 }
