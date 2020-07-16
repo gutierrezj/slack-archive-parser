@@ -1,20 +1,91 @@
-* {
-  font-family: sans-serif;
-}
+
 body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+}
+
+/* 
+
+app styles
+
+*/
+
+.sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200px;
+  background: #3f0e40;
+  color: rgb(188, 171, 188);
+  font-size: 15px;
+  line-height: 1.46668;
+  font-weight: 400;
+  font-variant-ligatures: common-ligatures;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-family: Slack-Lato, appleLogo, sans-serif;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 200px;
+  background-color: white;
   text-align: center;
-  padding: 1em;
+  padding: 0;
   font-size: 16px;
 }
-.messages {
+
+.content iframe{
   width: 100%;
-  max-width: 700px;
-  text-align: left;
-  display: inline-block;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
 
 }
-.messages .msg{
-  font-family: Consolas, monaco, "Ubuntu Mono", courier, monospace;
+
+.sidebar .channel-list {
+  list-style: none;
+  padding: 0;
+  margin: 30px 0;
+}
+
+
+
+.sidebar .channel-list .channel-item {
+  padding: 4px 20px;
+  cursor: pointer;
+}
+.sidebar .channel-list .channel-item:hover {
+  background: #350D36;
+}
+
+.sidebar .channel-list .channel-item.selected {
+  background: #350D36;
+}
+
+/* 
+
+channel messages styles  
+
+
+*/
+
+.messages {
+  width: 100%;
+  padding: 20px 0 40px 0;
+  text-align: left;
+  display: inline-block;
+  font-family: Slack-Lato,appleLogo,sans-serif;
+}
+.messages .msg {
   color: #616161;
   font-size: 14px;
   padding: 5px 0;
@@ -43,15 +114,13 @@ body {
   display: inline-block;
   color: rgb(200, 200, 200);
   margin-left: 0.5em;
-  font-size:14px;
-
+  font-size: 14px;
 }
 .messages .username {
   display: inline-block;
   font-weight: 600;
   line-height: 1;
-  font-size:14px;
-
+  font-size: 14px;
 }
 .messages .message {
   display: inline-block;
@@ -65,8 +134,9 @@ body {
 
 .messages .message .msg .imgFile,
 .messages .message .msg .videoFile {
-  max-width: 100%;
+  max-width: 500px;
   padding: 10px 0;
+  display: block;
 }
 
 .messages .message .msg .mention {
@@ -74,14 +144,11 @@ body {
 }
 
 .item.response {
-  background: #ecececad;
-  border-left: blue 1px solid;
   padding-left: 60px;
   margin-top: 0;
 }
 .item {
   margin-top: 10px;
-  border-left: blue 1px solid;
   padding: 5px 15px;
 }
 

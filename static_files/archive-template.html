@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="sidebar">
+    <ul class="channel-list">
+    </ul>
+  </div>
+  <div class="content">
+      <iframe id="content-iframe"></iframe>
+  </div>
+  <script lang="javascript">
+    let iframe = document.getElementById("content-iframe");
+    let channelsItems = document.getElementsByClassName("channel-item");
+    for (let i=0; i<channelsItems.length; i++){
+      channelsItems[i].onclick = function (e){
+        iframe.src = e.target.textContent + ".html"
+      }
+    }
+    iframe.src = channelsItems[0].textContent + ".html"
+  </script>
+</body>

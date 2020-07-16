@@ -8,6 +8,7 @@ const path = require("path");
 
 const downloadQueue = require("./support/downloadQueue");
 const htmlConverter = require("./support/htmlConverter");
+const htmlConverterSidebar = require("./support/htmlConverterSidebar");
 
 const OUTPUT_DIRECTORY = "output_html";
 const STATIC_FILES_DIRECTORY = "static_files";
@@ -119,7 +120,11 @@ function processArchiveDir(archiveDir) {
     log.debug(`Processing slack archive, ${channelDirs.length} channel(s) found.\n`);
 
     channelDirs.forEach((c) => processChannelSubdir(archiveDir, c));
+
+    htmlConverterSidebar(channelDirs);
   });
+
+
 }
 
 ////////////////////////////////////////////////
