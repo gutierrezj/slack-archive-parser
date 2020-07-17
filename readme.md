@@ -15,7 +15,13 @@ Slack message supported features:
 
 ## Instructions
 
-To run this tool, first clone the repository. Then run
+To run this tool, first clone the repository.
+```
+git clone https://github.com/gutierrezj/slack-archive-p
+arser.git
+```
+
+Then run
 
 ```
 npm install
