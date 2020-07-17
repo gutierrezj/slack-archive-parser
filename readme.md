@@ -17,13 +17,13 @@ Slack message supported features:
 
 To run this tool, first clone the repository.
 ```
-git clone https://github.com/gutierrezj/slack-archive-p
-arser.git
+git clone https://github.com/gutierrezj/slack-archive-parser.git
 ```
 
 Then run
 
 ```
+cd slack-archive-parser
 npm install
 ```
 
