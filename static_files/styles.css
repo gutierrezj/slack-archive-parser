@@ -3,6 +3,8 @@ body {
   padding: 0;
   margin: 0;
   height: 100%;
+  font-family: Slack-Lato, appleLogo, sans-serif;
+
 }
 
 /* 
@@ -16,7 +18,7 @@ app styles
   top: 0;
   bottom: 0;
   left: 0;
-  width: 200px;
+  width: 250px;
   background: #3f0e40;
   color: rgb(188, 171, 188);
   font-size: 15px;
@@ -25,22 +27,38 @@ app styles
   font-variant-ligatures: common-ligatures;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
-  font-family: Slack-Lato, appleLogo, sans-serif;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
+.content-header {
+  position: absolute;
+  left: 250px;
+  top: 0;
+  right: 0;
+  height: 59px;
+  background: white;
+  border-bottom: 1px solid #e8e8e8;
+
+}
+
+.content-header .channel-title{
+  font-weight: bold;
+  padding: 20px 30px;
+}
+
 .content {
   position: absolute;
-  top: 0;
+  top: 60px;
   bottom: 0;
   right: 0;
-  left: 200px;
+  left: 250px;
   background-color: white;
   text-align: center;
   padding: 0;
   font-size: 16px;
 }
+
 
 .content iframe{
   width: 100%;
@@ -80,6 +98,7 @@ channel messages styles
 
 .messages {
   width: 100%;
+  min-width: 600px;
   padding: 20px 0 40px 0;
   text-align: left;
   display: inline-block;
@@ -89,6 +108,8 @@ channel messages styles
   color: #616161;
   font-size: 14px;
   padding: 5px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .messages .msg a {
@@ -144,12 +165,13 @@ channel messages styles
 }
 
 .item.response {
-  padding-left: 60px;
   margin-top: 0;
+  border-left: 1px solid #bbbbbb;
+  margin-left: 47px;
 }
 .item {
   margin-top: 10px;
-  padding: 5px 15px;
+  padding: 5px 30px;
 }
 
 .item:hover {

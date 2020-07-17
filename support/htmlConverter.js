@@ -3,22 +3,18 @@ const json2html = require("node-json2html");
 const HTMLParser = require("node-html-parser");
 const path = require("path");
 const fs = require("fs");
-const emoji = require('node-emoji')
+const emoji = require("node-emoji");
 
 const TEMPLATE_FILE = "slack-output-template.html";
 const STATIC_FILES_DIRECTORY = "static_files";
 const OUTPUT_DIRECTORY = "output_html";
 
 const userProfilesDict = {
-  "U6P1QNPGQ": {"display_name":"tmansfield-williams"},
-  "UFD6HJWEA": {"display_name":"sbrunner"},
-  "UFCRNJBB9": {"display_name":"Arno"},
-  "UB3EE965A": {"display_name":"gmiele"},
-
+  U6P1QNPGQ: { display_name: "tmansfield-williams" },
+  UFD6HJWEA: { display_name: "sbrunner" },
+  UFCRNJBB9: { display_name: "Arno" },
+  UB3EE965A: { display_name: "gmiele" },
 };
-
-var root = getTemplateHtml(path.join(STATIC_FILES_DIRECTORY, TEMPLATE_FILE));
-var messagesNode = root.querySelector(".messages");
 
 /////////////////////////////////////////////
 //
@@ -67,18 +63,18 @@ function parseEmojis(data) {
   };
 
   // const slackEmojiRegexp = new RegExp(":[^:s]*(?:::[^:s]*)*:", "g");
-  data.forEach(i =>{
+  data.forEach((i) => {
     i.text = emoji.emojify(i.text, onMissing);
-  })
+  });
 }
 
-function parseHtmlEncodedChars(data){
-  const newLineR = new RegExp("\\n","g");
-  const linkR = new RegExp("<(https?:\\\/\\\/([^\\>]+\\\/)+[^\\>]+)>","g");
-  data.forEach(i =>{
+function parseHtmlEncodedChars(data) {
+  const newLineR = new RegExp("\\n", "g");
+  const linkR = new RegExp("<(https?:\\/\\/([^\\>]+\\/)+[^\\>]+)>", "g");
+  data.forEach((i) => {
     i.text = i.text.replace(newLineR, "<br>");
-    i.text = i.text.replace(linkR, "<a href=\"$1\">$1</a>" );
-  })
+    i.text = i.text.replace(linkR, '<a href="$1">$1</a>');
+  });
 }
 
 function convertTimestamp(epochTime) {
@@ -123,40 +119,39 @@ let template = {
         {
           "<>": "div",
           class: "msg",
-          html: function(obj){
-            const textTransform ={
+          html: function (obj) {
+            const textTransform = {
               "<>": "span",
               html: "${text}",
-            }
+            };
             const imgTransform = {
               "<>": "img",
               class: "imgFile",
               src: "${files.0.local_file}",
-            }
+            };
 
             const videoTransform = {
               "<>": "video",
               class: "videoFile",
               controls: "true",
               src: "${files.0.local_file}",
-            }
+            };
 
             const transforms = [textTransform];
 
-            if(obj.files){
-              if(obj.files.length > 1 ){
+            if (obj.files) {
+              if (obj.files.length > 1) {
                 console.warn("\n\nMore than 1 file detected!! \n\n", obj.files[1].id);
               }
-              if(obj.files[0].filetype === "mp4"){
+              if (obj.files[0].filetype === "mp4") {
                 transforms.push(videoTransform);
-              }else{
+              } else {
                 transforms.push(imgTransform);
               }
-            } 
-            
+            }
 
-            return json2html.transform(obj,transforms)
-          } 
+            return json2html.transform(obj, transforms);
+          },
         },
       ],
     },
@@ -206,6 +201,9 @@ function processThreads(messages) {
 }
 
 module.exports = function (messagesCombined, channelName) {
+  let root = getTemplateHtml(path.join(STATIC_FILES_DIRECTORY, TEMPLATE_FILE));
+  let messagesNode = root.querySelector(".messages");
+
   hydrateAllUsers(messagesCombined);
   parseEmojis(messagesCombined);
   parseHtmlEncodedChars(messagesCombined);
