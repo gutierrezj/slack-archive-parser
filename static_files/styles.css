@@ -157,7 +157,7 @@ channel messages styles
 .messages .message .msg .videoFile {
   max-width: 500px;
   padding: 10px 0;
-  display: block;
+  display: inline;
 }
 
 .messages .message .msg .mention {

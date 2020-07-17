@@ -8,7 +8,8 @@ Slack message supported features:
 - [x] Emojis
 - [x] Links
 - [x] User references (partial support)
-- [ ] Files (WIP)
+- [x] Files: Images & videos 
+- [ ] Files: other
 - [ ] Rich text formatting
 - [ ] Reactions
 

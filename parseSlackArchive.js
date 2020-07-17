@@ -40,7 +40,7 @@ function downloadFiles(messages, channelName) {
         outputPath: path.join(OUTPUT_DIRECTORY, channelName, fileName),
       };
       if (fs.existsSync(downloadDetails.outputPath)) {
-        log.info("file already exists, skipping download: ", fileName);
+        log.debug("file already exists, skipping download: ", fileName);
       } else {
         filesToDownload.push(downloadDetails);
       }
@@ -78,6 +78,8 @@ function readChannelAndDownloadImages(baseDir, channelName) {
   let dirName = path.join(baseDir, channelName);
 
   fs.readdir(dirName, function (err, items) {
+    log.info(`\nProcessing slack channel '${channelName}'.`);
+
     //
     // first: parse archive files
     //
@@ -108,7 +110,6 @@ function readChannelAndDownloadImages(baseDir, channelName) {
 }
 
 function processChannelSubdir(baseDir, channelName) {
-  log.info(`Processing slack channel '${channelName}'.\n`);
   readChannelAndDownloadImages(baseDir, channelName);
 }
 

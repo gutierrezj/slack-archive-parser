@@ -58,8 +58,8 @@ function hydrateAllUsers(data) {
 
 function parseEmojis(data) {
   const onMissing = function (name) {
-    log.info("Unknown emoji: ", name);
-    return name;
+    log.debug("Unknown emoji: ", name);
+    return ":" + name + ":";
   };
 
   // const slackEmojiRegexp = new RegExp(":[^:s]*(?:::[^:s]*)*:", "g");
@@ -88,7 +88,55 @@ function convertTimestamp(epochTime) {
 // define the converter template
 //
 /////////////////////////////////////////////
+let msgTemplate = {
+  "<>": "div",
+  html: function (obj) {
+    const brTransform = {
+      "<>": "br",
+    };
+    const textTransform = {
+      "<>": "span",
+      html: "${text}",
+    };
+    function imgTransform(id) {
+      return {
+        "<>": "img",
+        class: "imgFile",
+        src: "${files." + id + ".local_file}",
+      };
+    }
 
+    function videoTransform(id) {
+      return {
+        "<>": "video",
+        class: "videoFile",
+        controls: "true",
+        src: "${files." + id + ".local_file}",
+      };
+    }
+
+    const transforms = [];
+
+    if (obj.text) {
+      transforms.push(textTransform);
+    }
+
+    if (obj.files) {
+      if (obj.text) {
+        transforms.push(brTransform);
+      }
+      obj.files.forEach((f, idx) => {
+        if (f.filetype === "mp4" || f.filetype === "mov") {
+          transforms.push(videoTransform(idx));
+        } else {
+          transforms.push(imgTransform(idx));
+        }
+      });
+    }
+
+    return json2html.transform(obj, transforms);
+  },
+};
 let template = {
   "<>": "div",
   class: function (obj) {
@@ -120,37 +168,7 @@ let template = {
           "<>": "div",
           class: "msg",
           html: function (obj) {
-            const textTransform = {
-              "<>": "span",
-              html: "${text}",
-            };
-            const imgTransform = {
-              "<>": "img",
-              class: "imgFile",
-              src: "${files.0.local_file}",
-            };
-
-            const videoTransform = {
-              "<>": "video",
-              class: "videoFile",
-              controls: "true",
-              src: "${files.0.local_file}",
-            };
-
-            const transforms = [textTransform];
-
-            if (obj.files) {
-              if (obj.files.length > 1) {
-                console.warn("\n\nMore than 1 file detected!! \n\n", obj.files[1].id);
-              }
-              if (obj.files[0].filetype === "mp4") {
-                transforms.push(videoTransform);
-              } else {
-                transforms.push(imgTransform);
-              }
-            }
-
-            return json2html.transform(obj, transforms);
+            return json2html.transform(obj, msgTemplate);
           },
         },
       ],
