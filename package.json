@@ -1,13 +1,10 @@
 {
-  "name": "esri-slack-exporter",
+  "name": "slack-archive-parser",
   "version": "1.0.0",
-  "description": "Parses JSON exports from Slack, downloads images and creates an HTML with threads and images embedded as expected.",
-  "main": "slackImgDownload.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Parses JSON archive files from Slack, downloads images and creates an HTML with threads and images embedded.",
+  "main": "parseSlackArchive.js",
   "author": "Javier Gutierrez <javier_gutierrez@esri.com>",
-  "license": "Apache-2.0",
+  "license": "MIT License",
   "dependencies": {
     "axios": "^0.19.2",
     "console-log-level": "^1.4.1",
