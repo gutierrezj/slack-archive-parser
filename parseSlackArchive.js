@@ -7,8 +7,8 @@ const fs = require("fs");
 const path = require("path");
 
 const downloadQueue = require("./support/downloadQueue");
-const htmlConverter = require("./support/htmlConverter");
-const htmlConverterSidebar = require("./support/htmlConverterSidebar");
+const htmlConverter = require("./support/channelHtmlConverter");
+const htmlConverterSidebar = require("./support/archiveHtmlConverter");
 
 const OUTPUT_DIRECTORY = "output_html";
 const STATIC_FILES_DIRECTORY = "static_files";

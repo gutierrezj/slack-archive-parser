@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const emoji = require("node-emoji");
 
-const TEMPLATE_FILE = "slack-output-template.html";
+const TEMPLATE_FILE = "channel-template.html";
 const STATIC_FILES_DIRECTORY = "static_files";
 const OUTPUT_DIRECTORY = "output_html";
 
