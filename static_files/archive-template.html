@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <head>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -13,46 +13,5 @@
   <div class="content">
     <iframe id="content-iframe"></iframe>
   </div>
-  <script lang="javascript">
-    function setSelected(node){
-      node.className = node.className + " selected";
-    }
-    function setUnselected(node){
-      if(typeof node["className"] === "undefined"){
-        return;
-      }
-      if(node.className.indexOf("selected")<0){
-        return;
-      }
-
-      if (node.className === "selected"){
-        node.className = "";
-      }else{
-        let classes = node.className.split(" ");
-        if ( classes.length > 0 ){
-          classes.splice(classes.indexOf("selected"),1)
-          node.className = classes.join(" ");
-        }
-        else{
-          console.log("can't find selected class", node.className);
-        }
-      }
-    }
-
-    let iframe = document.getElementById("content-iframe");
-    let channelsItems = document.getElementsByClassName("channel-item");
-    for (let i=0; i<channelsItems.length; i++){
-      channelsItems[i].onclick = function (e){
-        let node = e.target;
-        iframe.src = node.textContent + ".html"
-        node.parentNode.childNodes.forEach(n=>setUnselected(n));
-        setSelected(node);
-        document.getElementsByClassName("channel-title")[0].textContent = node.textContent;
-      }
-    }
-    iframe.src = channelsItems[0].textContent + ".html"
-    setSelected(channelsItems[0]);
-    document.getElementsByClassName("channel-title")[0].textContent = channelsItems[0].textContent;
-
-  </script>
+  <script lang="javascript" src="archive-scripts.js"></script>
 </body>

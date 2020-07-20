@@ -12,8 +12,7 @@ const htmlConverterSidebar = require("./support/htmlConverterSidebar");
 
 const OUTPUT_DIRECTORY = "output_html";
 const STATIC_FILES_DIRECTORY = "static_files";
-const CSS_STYLES_FILE = "styles.css";
-const FILE_ICON_FILE = "file-icon.webp";
+const STATIC_FILES = ["styles.css", "file-icon.webp", "archive-scripts.js"];
 
 /////////////////////////////////////////////
 //
@@ -27,15 +26,12 @@ function downloadFiles(messages, channelName) {
   // parse json to get the url and to append the new local file name
   messages.forEach((m) => {
     // ignore deleted files
-    m.files = m.files.filter(f => f.mode !== "tombstone")
-    m.files
-    .forEach((f) => {
-      
+    m.files = m.files.filter((f) => f.mode !== "tombstone");
+    m.files.forEach((f) => {
       const url = f["url_private_download"];
       const fileName = f.id + "_" + f.created + "_" + f.name;
-      
 
-      // writes the new filename and relative path to the JSON file, 
+      // writes the new filename and relative path to the JSON file,
       f["local_file"] = path.posix.join(channelName, fileName);
 
       createDirIfItDoesntExist(path.join(OUTPUT_DIRECTORY, channelName));
@@ -67,8 +63,8 @@ function readFileFromDisk(fileName) {
   return archive;
 }
 
-function createDirIfItDoesntExist(path){
-  if(!fs.existsSync(path)){
+function createDirIfItDoesntExist(path) {
+  if (!fs.existsSync(path)) {
     fs.mkdirSync(path);
   }
 }
@@ -104,7 +100,6 @@ function readChannelAndDownloadImages(baseDir, channelName) {
     // second: update jsons with local filename & download attachment files
     //
     downloadFiles(msgWithImgs, channelName).then(() => {
-
       //
       // third: convert to html
       //
@@ -129,8 +124,6 @@ function processArchiveDir(archiveDir) {
 
     htmlConverterSidebar(channelDirs);
   });
-
-
 }
 
 ////////////////////////////////////////////////
@@ -164,17 +157,13 @@ let dirName = argv._[0];
 log.debug("");
 dirName = path.normalize(dirName);
 
-
-
 createDirIfItDoesntExist(OUTPUT_DIRECTORY);
 
-fs.copyFile(path.join(STATIC_FILES_DIRECTORY, CSS_STYLES_FILE), path.join(OUTPUT_DIRECTORY, CSS_STYLES_FILE), () =>
-  log.debug("Copied CSS file to output folder")
-);
-
-fs.copyFile(path.join(STATIC_FILES_DIRECTORY, FILE_ICON_FILE), path.join(OUTPUT_DIRECTORY, FILE_ICON_FILE), () =>
-  log.debug("Copied file icon file to output folder")
-);
+STATIC_FILES.forEach((f) => {
+  fs.copyFile(path.join(STATIC_FILES_DIRECTORY, f), path.join(OUTPUT_DIRECTORY, f), () =>
+    log.debug("Copied static file to output folder", f)
+  );
+});
 
 if (argv.a) {
   processArchiveDir(dirName);
