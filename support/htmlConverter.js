@@ -106,6 +106,22 @@ let msgTemplate = {
       };
     }
 
+    function fileTransform(id) {
+      return {
+        "<>": "a",
+        href: "${files." + id + ".local_file}",
+        target: "_blank",
+        html: [
+          {
+            "<>": "img",
+            class: "file",
+            title: "${files." + id + ".local_file}",
+          },
+          { "<>": "span", html: "${files." + id + ".title}" },
+        ],
+      };
+    }
+
     function videoTransform(id) {
       return {
         "<>": "video",
@@ -126,10 +142,16 @@ let msgTemplate = {
         transforms.push(brTransform);
       }
       obj.files.forEach((f, idx) => {
-        if (f.filetype === "mp4" || f.filetype === "mov") {
+        if (f.filetype === undefined) {
+          console.log("undefined filetype ", f);
+          return;
+        }
+        if (["mp4", "mov", "mkv", "webm", "avi"].indexOf(f.filetype.toLowerCase()) >= 0) {
           transforms.push(videoTransform(idx));
-        } else {
+        } else if (["jpg", "jpeg", "png", "gif", "webp"].indexOf(f.filetype.toLowerCase()) >= 0) {
           transforms.push(imgTransform(idx));
+        } else {
+          transforms.push(fileTransform(idx));
         }
       });
     }

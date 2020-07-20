@@ -13,6 +13,7 @@ const htmlConverterSidebar = require("./support/htmlConverterSidebar");
 const OUTPUT_DIRECTORY = "output_html";
 const STATIC_FILES_DIRECTORY = "static_files";
 const CSS_STYLES_FILE = "styles.css";
+const FILE_ICON_FILE = "file-icon.webp";
 
 /////////////////////////////////////////////
 //
@@ -25,7 +26,11 @@ function downloadFiles(messages, channelName) {
 
   // parse json to get the url and to append the new local file name
   messages.forEach((m) => {
-    m.files.forEach((f) => {
+    // ignore deleted files
+    m.files = m.files.filter(f => f.mode !== "tombstone")
+    m.files
+    .forEach((f) => {
+      
       const url = f["url_private_download"];
       const fileName = f.id + "_" + f.created + "_" + f.name;
       
@@ -165,6 +170,10 @@ createDirIfItDoesntExist(OUTPUT_DIRECTORY);
 
 fs.copyFile(path.join(STATIC_FILES_DIRECTORY, CSS_STYLES_FILE), path.join(OUTPUT_DIRECTORY, CSS_STYLES_FILE), () =>
   log.debug("Copied CSS file to output folder")
+);
+
+fs.copyFile(path.join(STATIC_FILES_DIRECTORY, FILE_ICON_FILE), path.join(OUTPUT_DIRECTORY, FILE_ICON_FILE), () =>
+  log.debug("Copied file icon file to output folder")
 );
 
 if (argv.a) {
