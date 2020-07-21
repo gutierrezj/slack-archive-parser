@@ -12,7 +12,7 @@ Slack message supported features:
 - [x] Files: js, json, diff, csv, txt, pdf, xlsx, pptx, sd
 - [ ] Rich text formatting
 - [ ] Reactions
-- [ ] permalink to messages
+- [x] permalink to messages
 
 
 ## Instructions

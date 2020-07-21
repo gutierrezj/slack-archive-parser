@@ -164,6 +164,10 @@ let template = {
   class: function (obj) {
     return obj["parent_user_id"] ? "item response" : "item";
   },
+  // this is used for anchor links
+  id: function (obj) { 
+    return convertTimestamp(obj.ts);
+  },
   html: [
     {
       "<>": "img",
@@ -180,8 +184,11 @@ let template = {
           html: "${user_profile.display_name}",
         },
         {
-          "<>": "div",
+          "<>": "a",
           class: "time",
+          href: function (obj) {
+            return "#" + convertTimestamp(obj.ts);
+          },
           html: function (obj) {
             return convertTimestamp(obj.ts);
           },

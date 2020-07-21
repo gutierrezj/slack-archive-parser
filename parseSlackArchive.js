@@ -12,7 +12,7 @@ const htmlConverterSidebar = require("./support/archiveHtmlConverter");
 
 const OUTPUT_DIRECTORY = "output_html";
 const STATIC_FILES_DIRECTORY = "static_files";
-const STATIC_FILES = ["styles.css", "file-icon.webp", "archive-scripts.js"];
+const STATIC_FILES = ["styles.css", "file-icon.webp", "archive-scripts.js", "channel-scripts.js"];
 
 /////////////////////////////////////////////
 //

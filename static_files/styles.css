@@ -67,7 +67,7 @@ app styles
 .sidebar .channel-list {
   list-style: none;
   padding: 0;
-  margin: 30px 0;
+  margin: 60px 0;
 }
 
 .sidebar .channel-list .channel-item {
@@ -79,8 +79,10 @@ app styles
 }
 
 .sidebar .channel-list .channel-item.selected {
-  background: #350d36;
+  background: #1c031d;
+  color: rgb(234 226 234);
 }
+
 
 /* 
 
@@ -129,7 +131,12 @@ channel messages styles
   color: rgb(200, 200, 200);
   margin-left: 0.5em;
   font-size: 14px;
+  text-decoration: none;
 }
+.messages .time:hover {
+  text-decoration: underline;
+}
+
 .messages .username {
   display: inline-block;
   font-weight: 600;

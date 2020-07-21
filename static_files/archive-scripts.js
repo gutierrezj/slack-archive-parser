@@ -25,9 +25,9 @@ function setUnselected(node) {
   }
 }
 
-function doSelectChannel(node) {
+function doSelectChannel(node, timestamp) {
   let iframe = document.getElementById("content-iframe");
-  iframe.src = node.textContent + ".html";
+  iframe.src = node.textContent + ".html" + (timestamp ? "#"+timestamp : "");
   node.parentNode.childNodes.forEach((n) => setUnselected(n));
   setSelected(node);
   document.getElementsByClassName("channel-title")[0].textContent = node.textContent;
@@ -39,9 +39,20 @@ function selectChannelByUrl(channelName) {
 
 function selectChannelFromUrl() {
   if (location.hash) {
+    const hashStr = location.hash.substring(1,location.hash.length);
+    let channelName;
+    let msgTimestamp;
+
+    if ( hashStr.indexOf(";") >=0) {
+      channelName = hashStr.split(";")[0];
+      msgTimestamp = hashStr.split(";")[1];
+      console.log(msgTimestamp)
+    }else{
+      channelName = hashStr;
+    }
     for (let i = 0; i < channelsItems.length; i++) {
-      if (location.hash.substring(1,location.hash.length) === channelsItems[i].textContent) {
-        doSelectChannel(channelsItems[i]);
+      if ( channelName === channelsItems[i].textContent) {
+        doSelectChannel(channelsItems[i], msgTimestamp);
       }
     }
   }else{
