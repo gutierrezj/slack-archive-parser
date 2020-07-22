@@ -156,6 +156,7 @@ channel messages styles
 .messages .message .msg .imgFile,
 .messages .message .msg .videoFile {
   max-width: 500px;
+  max-height: 400px;
   padding: 10px 0;
   display: inline;
 }
@@ -173,6 +174,15 @@ channel messages styles
   margin-top: 0;
   border-left: 1px solid #bbbbbb;
   margin-left: 47px;
+}
+.item.parent{
+  border-left: 1px solid #bbbbbb;
+  margin-left: 47px;
+  margin-top: 15px;
+  padding: 0px 30px;
+}
+.item.parent img.avatar{
+  margin-left:-47px;
 }
 .item {
   margin-top: 10px;
