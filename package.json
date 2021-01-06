@@ -6,7 +6,7 @@
   "author": "Javier Gutierrez <javier_gutierrez@esri.com>",
   "license": "MIT License",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "console-log-level": "^1.4.1",
     "node-emoji": "^1.10.0",
     "node-html-parser": "^1.2.20",
